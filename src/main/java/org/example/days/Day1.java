@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Day1 {
 
@@ -11,26 +12,24 @@ public class Day1 {
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"
     );
 
-    public static long solvePart1(Path filePath) throws IOException {
-        int sum = 0;
-        for(String line : Files.readAllLines(filePath)) {
-            sum += retrieveLineNumberPart1(line);
+    public static long solve(Path filePath, boolean isPart2) throws IOException {
+        try(var lines = Files.lines(filePath)){
+            return lines.map(line -> calculateLineNumber(line, isPart2)).reduce(0, Integer::sum);
         }
-        return sum;
     }
 
-    private static int retrieveLineNumberPart1(String line) {
+    private static int calculateLineNumber(String line, boolean isPart2) {
         int length = line.length();
         int number = 0;
-        for(int index = 0; index < length; index++) {
-            int digit = searchDigitInGivenIndex(line, index);
+        for(int characterIndex = 0; characterIndex < length; characterIndex++) {
+            int digit = findPossibleDigit(line, characterIndex, isPart2);
             if(digit != 0) {
                 number += 10 * digit;
                 break;
             }
         }
-        for(int index = length-1; index >=0; index--) {
-            int digit = searchDigitInGivenIndex(line, index);
+        for(int characterIndex = length-1; characterIndex >=0; characterIndex--) {
+            int digit = findPossibleDigit(line, characterIndex, isPart2);
             if(digit != 0) {
                 number +=  digit;
                 break;
@@ -39,53 +38,26 @@ public class Day1 {
         return number;
     }
 
-    private static int searchDigitInGivenIndex(String line, int index) {
+    private static int findPossibleDigit(String line, int index, boolean isPart2) {
+        if (isPart2) {
+            Integer i = searchDigitWrittenWithLetters(line, index);
+            if (i != null) return i;
+        }
+        return searchDigit(line, index);
+    }
+
+    private static int searchDigit(String line, int index) {
         if(Character.isDigit(line.charAt(index))) {
             return Character.getNumericValue(line.charAt(index));
         }
         return 0;
     }
 
-    public static long solvePart2(Path filePath) throws IOException {
-        int sum = 0;
-        for(String line : Files.readAllLines(filePath)) {
-            sum += retrieveLineNumberPart2(line);
-        }
-        return sum;
-    }
-
-    private static int retrieveLineNumberPart2(String line) {
-        int length = line.length();
-        int number = 0;
-        for(int j = 0; j < length; j++) {
-            int digit = findDigitAtCurrentIndexPart2(line, j);
-            if(digit != 0) {
-                number += 10 * digit;
-                break;
-            }
-        }
-        for(int j = length-1; j >=0; j--) {
-            int digit = findDigitAtCurrentIndexPart2(line, j);
-            if(digit != 0) {
-                number +=  digit;
-                break;
-            }
-        }
-        return number;
-    }
-
-    private static int findDigitAtCurrentIndexPart2(String line, int index) {
-        Integer i = searchLetterDigitInLine(line, index);
-        if (i != null) return i;
-        return searchDigitInGivenIndex(line, index);
-    }
-
-    private static Integer searchLetterDigitInLine(String line, int index) {
-        int length = line.length();
-        for(int i = 0; i < digits.size(); i++) {
-            String digit = digits.get(i);
-            if(index + digit.length() <= length && line.substring(index, index + digit.length()).equals(digit)) {
-                return i + 1;
+    private static Integer searchDigitWrittenWithLetters(String line, int index) {
+        for(int digitIndex = 0; digitIndex < digits.size(); digitIndex++) {
+            String digit = digits.get(digitIndex);
+            if(index + digit.length() <= line.length() && line.startsWith(digit, index)) {
+                return digitIndex + 1;
             }
         }
         return null;
