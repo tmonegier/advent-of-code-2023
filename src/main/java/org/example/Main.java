@@ -8,7 +8,8 @@ import java.nio.file.Path;
 
 public class Main {
     public static void main(String[] args) throws URISyntaxException, IOException {
-        long solution = Day4.solvePart2(Path.of(Main.class.getClassLoader().getResource("day_4").toURI()));
+        long solution = Day5.solve(Path.of(Main.class.getClassLoader().getResource("day_5").toURI()), true);
         System.out.println(solution);
+
     }
 }
