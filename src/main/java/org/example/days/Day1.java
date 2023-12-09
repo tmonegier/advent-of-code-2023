@@ -4,62 +4,56 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class Day1 {
 
-    private static List<String> digits = List.of(
+    private static final List<String> DIGITS = List.of(
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"
     );
 
     public static long solve(Path filePath, boolean isPart2) throws IOException {
         try(var lines = Files.lines(filePath)){
-            return lines.map(line -> calculateLineNumber(line, isPart2)).reduce(0, Integer::sum);
+            return lines.map(line -> buildLineNumber(line, isPart2)).reduce(0, Integer::sum);
         }
     }
 
-    private static int calculateLineNumber(String line, boolean isPart2) {
+    private static int buildLineNumber(String line, boolean isPart2) {
         int length = line.length();
-        int number = 0;
+        int lineNumber = 0;
         for(int characterIndex = 0; characterIndex < length; characterIndex++) {
-            int digit = findPossibleDigit(line, characterIndex, isPart2);
-            if(digit != 0) {
-                number += 10 * digit;
+            var digit = findDigit(line, characterIndex, isPart2);
+            if(digit.isPresent()) {
+                lineNumber += 10 * digit.get();
                 break;
             }
         }
         for(int characterIndex = length-1; characterIndex >=0; characterIndex--) {
-            int digit = findPossibleDigit(line, characterIndex, isPart2);
-            if(digit != 0) {
-                number +=  digit;
+            var digit = findDigit(line, characterIndex, isPart2);
+            if(digit.isPresent()) {
+                lineNumber +=  digit.get();
                 break;
             }
         }
-        return number;
+        return lineNumber;
     }
 
-    private static int findPossibleDigit(String line, int index, boolean isPart2) {
-        if (isPart2) {
-            Integer i = searchDigitWrittenWithLetters(line, index);
-            if (i != null) return i;
-        }
-        return searchDigit(line, index);
-    }
-
-    private static int searchDigit(String line, int index) {
+    private static Optional<Integer> findDigit(String line, int index, boolean isPart2) {
         if(Character.isDigit(line.charAt(index))) {
-            return Character.getNumericValue(line.charAt(index));
+            return Optional.of(Character.getNumericValue(line.charAt(index)));
         }
-        return 0;
+        if(!isPart2) {
+            return Optional.empty();
+        }
+        return findSpelledDigit(line, index);
     }
 
-    private static Integer searchDigitWrittenWithLetters(String line, int index) {
-        for(int digitIndex = 0; digitIndex < digits.size(); digitIndex++) {
-            String digit = digits.get(digitIndex);
-            if(index + digit.length() <= line.length() && line.startsWith(digit, index)) {
-                return digitIndex + 1;
-            }
-        }
-        return null;
+    private static Optional<Integer> findSpelledDigit(String line, int index) {
+        return IntStream.range(0, DIGITS.size())
+                .boxed()
+                .filter(digitIndex -> line.startsWith(DIGITS.get(digitIndex), index))
+                .map(digitIndex -> digitIndex+1)
+                .findFirst();
     }
 }
