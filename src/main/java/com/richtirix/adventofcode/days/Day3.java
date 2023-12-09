@@ -1,4 +1,4 @@
-package org.example.days;
+package com.richtirix.adventofcode.days;
 
 import java.io.IOException;
 import java.nio.file.Files;

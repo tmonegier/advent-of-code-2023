@@ -1,4 +1,4 @@
-package org.example.days.day7;
+package com.richtirix.adventofcode.days.day7;
 
 public enum HandType {
     HIGH_CARD(1),
