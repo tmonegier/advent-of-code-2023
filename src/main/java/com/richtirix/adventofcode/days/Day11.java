@@ -20,8 +20,24 @@ public class Day11 {
         Arrays.fill(emptyColumns, true);
 
         List<GalaxyCoordinates> galaxiesCoordinates = buildGalaxyCoordinates(lines, emptyColumns, emptyRows);
-        galaxiesCoordinates =  buildRealCoordinates(galaxiesCoordinates, emptyRows, emptyColumns, isPart2?1_000_000:2);
+
+        int[] rowsMultiplicationFactor = buildMultiplicationFactor(emptyRows);
+        int[] columnsMultiplicationFactor = buildMultiplicationFactor(emptyColumns);
+
+        galaxiesCoordinates =  buildRealCoordinates(galaxiesCoordinates, rowsMultiplicationFactor, columnsMultiplicationFactor, isPart2?1_000_000:2);
         return getSumOfShortestPaths(galaxiesCoordinates);
+    }
+
+    private static int[] buildMultiplicationFactor(Boolean[] emptyRows) {
+        int[] rowsMultiplicationFactor = new int[emptyRows.length];
+        int tmp = 0;
+        for (int i = 0; i < emptyRows.length; i++) {
+            if(Boolean.TRUE.equals(emptyRows[i])) {
+                tmp ++;
+            }
+            rowsMultiplicationFactor[i] = tmp;
+        }
+        return rowsMultiplicationFactor;
     }
 
     private static long getSumOfShortestPaths(List<GalaxyCoordinates> galaxiesCoordinates) {
@@ -33,17 +49,16 @@ public class Day11 {
         return sumOfShortestPaths;
     }
 
-    private static List<GalaxyCoordinates> buildRealCoordinates(List<GalaxyCoordinates> galaxiesCoordinates, Boolean[] emptyRows, Boolean[] emptyColumns, int expansionMultiplier) {
+    private static List<GalaxyCoordinates> buildRealCoordinates(
+            List<GalaxyCoordinates> galaxiesCoordinates,
+            int[] rowsMultiplicationFactor,
+            int[] columnsMultiplicationFactor,
+            int expansionMultiplier
+    ) {
         return galaxiesCoordinates.stream().map(
-            galaxyCoordinates -> {
-                long xGalaxy = galaxyCoordinates.x;
-                long yGalaxy = galaxyCoordinates.y;
-                long numberOfEmptyRowsBeforeGalaxy = Arrays.stream(emptyRows).limit(galaxyCoordinates.x).filter(b->b).count();
-                long numberOfEmptyColumnsBeforeGalaxy = Arrays.stream(emptyColumns).limit(galaxyCoordinates.y).filter(b->b).count();
-                return new GalaxyCoordinates(
-                    xGalaxy + numberOfEmptyRowsBeforeGalaxy * (expansionMultiplier - 1),
-                    yGalaxy+ numberOfEmptyColumnsBeforeGalaxy * (expansionMultiplier - 1));
-            }
+            galaxyCoordinates -> new GalaxyCoordinates(
+            galaxyCoordinates.x + rowsMultiplicationFactor[galaxyCoordinates.x] * (expansionMultiplier - 1),
+            galaxyCoordinates.y+ columnsMultiplicationFactor[galaxyCoordinates.y] * (expansionMultiplier - 1))
         ).toList();
     }
 
@@ -61,7 +76,7 @@ public class Day11 {
                 .toList();
     }
 
-    private record GalaxyCoordinates(long x, long y) {
+    private record GalaxyCoordinates(int x, int y) {
         public long shortestPath(GalaxyCoordinates otherGalaxy) {
             return Math.max(x, otherGalaxy.x) - Math.min(x, otherGalaxy.x)
                     + Math.max(y, otherGalaxy.y) - Math.min(y, otherGalaxy.y);
