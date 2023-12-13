@@ -5,11 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 public class Day13 {
-    public static long solve(Path filePath, boolean isPart2) throws IOException, ExecutionException, InterruptedException {
+    public static long solve(Path filePath, boolean isPart2) throws IOException {
 
         var lines = Files.readAllLines(filePath);
         List<String> blockLines = new ArrayList<>();
@@ -24,13 +23,10 @@ public class Day13 {
         }
         map.add(blockLines);
 
-        if(!isPart2) {
-            return map.stream().map(Day13::calculateSymetricResult).reduce(0L, Long::sum);
-        }
-        return 0L;
+        return map.stream().map(block -> calculateSymmetricResult(block, isPart2)).reduce(0L, Long::sum);
     }
 
-    private static long calculateSymetricResult(List<String> blockLines) {
+    private static long calculateSymmetricResult(List<String> blockLines, boolean isPart2) {
         List<Long> rowNumbers = blockLines.stream().map(
             line -> Long.parseLong(line.replace("#", "1").replace(".", "0"), 2)
         ).toList();
@@ -44,31 +40,51 @@ public class Day13 {
             }
         ).toList();
 
-        return 100L * retrieveSymetricCandidates(rowNumbers) + retrieveSymetricCandidates(columnNumbers);
+        return 100L * retrieveSymmetricCandidates(rowNumbers, isPart2) + retrieveSymmetricCandidates(columnNumbers, isPart2);
     }
 
-    private static int retrieveSymetricCandidates(List<Long> rowNumbers) {
+    private static int retrieveSymmetricCandidates(List<Long> numbers, boolean isPart2) {
         List<Integer> candidates = new ArrayList<>();
-        for (int i = 1; i < rowNumbers.size(); i++) {
-            if(rowNumbers.get(i).equals(rowNumbers.get(i-1))) {
+        for (int i = 1; i < numbers.size(); i++) {
+            if(
+                numbers.get(i).equals(numbers.get(i-1)) || (isPart2 && isPowerOfTwo(Math.abs(numbers.get(i) - numbers.get(i-1))))
+            ) {
                 candidates.add(i);
             }
         }
-        for (Integer integer : candidates) {
-            boolean isSymetricLine = true;
-            int i = 0;
-            int candidate = integer;
-            while (candidate + i < rowNumbers.size() && candidate - i - 1 >= 0) {
-                if (!rowNumbers.get(candidate + i).equals(rowNumbers.get(candidate - i - 1))) {
-                    isSymetricLine = false;
-                    break;
-                }
-                i++;
-            }
-            if (isSymetricLine) {
+        for (Integer candidate : candidates) {
+            if(isSymmetricLine(numbers, candidate, isPart2)) {
                 return candidate;
             }
         }
         return 0;
+    }
+
+    private static boolean isSymmetricLine(List<Long> rowNumbers, int lineIndex, boolean isPart2) {
+        boolean powerOfTwoAlreadyUsed = false;
+        int i = 0;
+        while (lineIndex + i < rowNumbers.size() && lineIndex - i - 1 >= 0) {
+            if (!rowNumbers.get(lineIndex + i).equals(rowNumbers.get(lineIndex - i - 1))) {
+                if(
+                    !isPart2 ||
+                        !isPowerOfTwo(Math.abs(rowNumbers.get(lineIndex+i) - rowNumbers.get(lineIndex - i - 1))) ||
+                            powerOfTwoAlreadyUsed
+                ){
+                    return false;
+                }
+                powerOfTwoAlreadyUsed = true;
+            }
+            i++;
+        }
+        return (!isPart2 || powerOfTwoAlreadyUsed);
+    }
+
+    private static boolean isPowerOfTwo(long n)
+    {
+        if (n == 0)
+            return false;
+
+        double v = Math.log(n) / Math.log(2);
+        return (int)(Math.ceil(v)) == (int)(Math.floor(v));
     }
 }
