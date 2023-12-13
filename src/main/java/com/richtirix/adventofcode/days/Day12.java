@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -15,35 +14,21 @@ import java.util.stream.Collectors;
 
 public class Day12 {
 
-    private final static Pattern LINE_PATTERN = Pattern.compile("(?<pipes>[#|.|\\?]*) (?<numbers>.*)");
-    public static long solve(Path filePath, boolean isPart2) throws IOException, ExecutionException, InterruptedException {
+    private final static Pattern LINE_PATTERN = Pattern.compile("(?<pipes>[#|.|?]*) (?<numbers>.*)");
+    public static long solve(Path filePath, boolean isPart2) throws IOException {
         AtomicInteger i = new AtomicInteger();
-        ForkJoinPool customThreadPool = new ForkJoinPool(8);
-        return customThreadPool.submit(() -> Files.lines(filePath).parallel().map(Day12::findNumberOfPossibilities).peek((l) -> System.out.println(i.incrementAndGet())).reduce(0L, Long::sum)).get();
+        return Files.lines(filePath).parallel().map(Day12::findNumberOfPossibilities).peek(l -> System.out.println(i.incrementAndGet())).reduce(0L, Long::sum);
     }
 
     private static Long findNumberOfPossibilities(String line) {
         var matcher = LINE_PATTERN.matcher(line);
         if(matcher.find()) {
             String tmpPipeTemplate = matcher.group("pipes");
-            tmpPipeTemplate = tmpPipeTemplate +
-                    '?' +
-                    tmpPipeTemplate +
-                    '?' +
-                    tmpPipeTemplate +
-                    '?' +
-                    tmpPipeTemplate +
-                    '?' +
-                    tmpPipeTemplate;
             String pipeTemplate = String.join(".", Arrays.stream(tmpPipeTemplate.split("\\.")).filter(Predicate.not(String::isEmpty)).toList());
 
 
-            List<Integer> numbers = Arrays.stream(matcher.group("numbers").split(",")).map(Integer::parseInt).collect(Collectors.toList());
+            List<Integer> numbers = Arrays.stream(matcher.group("numbers").split(",")).map(Integer::parseInt).toList();
             List<Integer> finalNumbers = new ArrayList<>(numbers);
-            finalNumbers.addAll(numbers);
-            finalNumbers.addAll(numbers);
-            finalNumbers.addAll(numbers);
-            finalNumbers.addAll(numbers);
 
             int totalPipes = finalNumbers.stream().reduce(0, Integer::sum);
             char[] currentPossibility = new char[pipeTemplate.length()];
